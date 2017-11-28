@@ -17,6 +17,7 @@ public class SRPN {
    
 	Stack<String> myStack = new Stack<String>();
 	RandomNumber r = new RandomNumber(myStack);
+	Operation operation;
 	
 	/**
 	 * Method. Checks if string is an operator.
@@ -26,7 +27,7 @@ public class SRPN {
 	 * @return Boolean
 	 * 		True if operator, false if not
 	 */
-	public static boolean isOperator(String s) {
+	public boolean isOperator(String s) {
 		
 		if ( s.equals("+") || s.equals("-") || s.equals("/") || s.equals("*") || s.equals("+") ||
 				s.equals("^") || s.equals("%") || s.equals("=") ) {
@@ -46,7 +47,7 @@ public class SRPN {
 	 * @return Boolean
 	 * 		True if integer, false if not
 	 */
-	public static boolean isInteger(String s) {
+	public boolean isInteger(String s) {
 		
 		if (s.matches("^(-?)[0-9]+$")) {
 			return true;
@@ -65,7 +66,7 @@ public class SRPN {
 	 * @return Boolean
 	 * 		True if special, false if not
 	 */
-	public static boolean isSpecial(String s) {
+	public boolean isSpecial(String s) {
 		
 		if (s.equals("d") | s.equals("r")) {
 			return true;
@@ -83,7 +84,7 @@ public class SRPN {
 	 * @return Boolean
 	 * 		True if octal, false if not
 	 */
-	public static boolean isOctal(String s) {
+	public boolean isOctal(String s) {
 		
 		if (s.length() > 1 && !s.contains("8") && !s.contains("9")) {
 			if (s.charAt(0) == '0') {
@@ -104,11 +105,15 @@ public class SRPN {
 	
 	/**
 	 * Method. Checks whether calculation saturates the integer's range and returns saturated number if true.
+	 * 		PLEASE NOTE: I made this class 'static' after consultation with lab tutors. I still needed to be able 
+	 * 				to access this method from another class, hence why I have done it. However, I have used this
+	 * 				carefully in order to avoid the problems that doing this can cause (highlighted by Michael in
+	 * 				our lectures).
 	 * @param bigInteger
 	 * 		Result from calculation, stored as a long
 	 * @return Either calculation value or maximum/minimum integer value if saturated
 	 */
-	public int fixSaturation(BigInteger bigInteger) {
+	public static int fixSaturation(BigInteger bigInteger) {
 		
 		if (bigInteger.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) == 1) {
 			return Integer.MAX_VALUE;
@@ -162,59 +167,9 @@ public class SRPN {
 		return s.substring(0, comment);
 		
 	}
-	
-	/**
-	 * Method. Performs operation on two numbers.
-	 * 
-	 * @param num1
-	 * 		2nd to last number that was popped from stack
-	 * @param num2
-	 * 		Last number that was popped from stack
-	 * @param operator
-	 * 		Operator symbol i.e. + - / * ^ % 
-	 */
-	public void performOperation(long num1, long num2, String operator) {
-		
-		switch(operator) {
-			case "+":
-				myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 + num2))));
-				break;
-			case "-":
-				myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 - num2))));
-				break;
-			case "/":
-				//If last number on stack is 0, display error msg and place numbers back on stack.
-				if (num2 == 0) {
-					System.out.println("Divide by 0.");
-					myStack.push(String.valueOf(num1)); //2nd to last number pushed back on.
-					myStack.push(String.valueOf(num2)); //Last number pushed back on.
-				}
-				else {
-					myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 / num2))));
-				}
-				break;
-			case "*":
-				myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 * num2))));
-				break;
-			case "^":
-				if (num2 < 0) {
-					System.out.println("Negative power.");
-					myStack.push(String.valueOf(num1)); //2nd to last number pushed back on.
-					myStack.push(String.valueOf(num2)); //Last number pushed back on.
-				}
-				else {
-					myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf((long) Math.pow(num1, num2)))));
-				}
-				break;
-			case "%":
-				myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 % num2))));
-				break;	
-		}
-		
-	}
 
 	/**
-	 * Method. Perform relevant operations on a string containing input from the command-line.
+	 * Method. Directs functionality to be used on a string containing input from the command-line.
 	 * @param s
 	 * 		String containing line of input from the command-line
 	 * @exception EmptyStackException
@@ -292,10 +247,9 @@ public class SRPN {
 						}
 						//Otherwise perform operation
 						else {
-							long num2 = Long.valueOf((String) myStack.pop());
-							long num1 = Long.valueOf((String) myStack.pop());
-							
-							performOperation(num1, num2, stringArray[i]);
+							operation = new Operation(myStack);
+							operation.performOperation(stringArray[i]);
+							myStack = operation.getMyStack();
 						}
 					}
 					//If blank string or just contains whitespace

@@ -74,7 +74,7 @@ public class RandomNumber {
 	/**
 	 * Mutator.
 	 * @param myStack
-	 * 		SRPN stack
+	 * 		Any stack you wish (likely SRPN stack)
 	 */
 	public void setMyStack(Stack<String> myStack) {
 		this.myStack = myStack;
