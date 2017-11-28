@@ -8,8 +8,8 @@ import java.util.Stack;
 /**
  *  Program class for an SRPN calculator.
  * 
- *  @version 1.6
- *  @release 26/11/2017
+ *  @version 1.7
+ *  @release 28/11/2017
  *  @copyright Copyright (C) 2017 Ed Jeffery - All Rights Reserved
  */
 
@@ -162,6 +162,56 @@ public class SRPN {
 		return s.substring(0, comment);
 		
 	}
+	
+	/**
+	 * Method. Performs operation on two numbers.
+	 * 
+	 * @param num1
+	 * 		2nd to last number that was popped from stack
+	 * @param num2
+	 * 		Last number that was popped from stack
+	 * @param operator
+	 * 		Operator symbol i.e. + - / * ^ % 
+	 */
+	public void performOperation(long num1, long num2, String operator) {
+		
+		switch(operator) {
+			case "+":
+				myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 + num2))));
+				break;
+			case "-":
+				myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 - num2))));
+				break;
+			case "/":
+				//If last number on stack is 0, display error msg and place numbers back on stack.
+				if (num2 == 0) {
+					System.out.println("Divide by 0.");
+					myStack.push(String.valueOf(num1)); //2nd to last number pushed back on.
+					myStack.push(String.valueOf(num2)); //Last number pushed back on.
+				}
+				else {
+					myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 / num2))));
+				}
+				break;
+			case "*":
+				myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 * num2))));
+				break;
+			case "^":
+				if (num2 < 0) {
+					System.out.println("Negative power.");
+					myStack.push(String.valueOf(num1)); //2nd to last number pushed back on.
+					myStack.push(String.valueOf(num2)); //Last number pushed back on.
+				}
+				else {
+					myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf((long) Math.pow(num1, num2)))));
+				}
+				break;
+			case "%":
+				myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 % num2))));
+				break;	
+		}
+		
+	}
 
 	/**
 	 * Method. Perform relevant operations on a string containing input from the command-line.
@@ -179,12 +229,17 @@ public class SRPN {
 		if (s.contains("#")) {
 			processCommand(removeComment(s));
 		}
+		//Checks if string is a tab
+		else if (s.equals("\t")) {
+			System.out.println("Unrecognised operator or operand " + "\"" + s + "\".");
+		}
 		//Check for special Rachid statement
 		else if (s.contains("rachid")) {
 			System.out.println("Rachid is the best unit lecturer.");
 		}
 		else {
 			//Split string using a regular expression, then process.
+			//Regular expression splits up string by operators and numbers and any unrecognised set of characters
 			String[] stringArray = s.trim().split("(?<=[d+/=^%])|(?=[-d+/=^%])|(\\s)|(?<=[^0-9-d+/=^%])|(?=[^0-9-d+/=^%])");
 			for (int i = 0; i < stringArray.length; i++) { 
 				stringArray[i] = stringArray[i].trim();
@@ -222,61 +277,29 @@ public class SRPN {
 						}
 					}
 					else if (isOperator(stringArray[i])) {
-						//If '=', print top of stack
+						//If "=", print top of stack
 						if (stringArray[i].equals("=")) {
 							if (myStack.isEmpty()) {
 								throw new EmptyStackException();
 							}
-							System.out.println("" + myStack.peek());
+							else {
+								System.out.println("" + myStack.peek());
+							}
 						}
 						//If stack does not have two elements, cannot perform operation
 						else if (myStack.size() < 2) {
 							throw new EmptyStackException();
 						}
-						//Otherwise perform given operation
+						//Otherwise perform operation
 						else {
 							long num2 = Long.valueOf((String) myStack.pop());
 							long num1 = Long.valueOf((String) myStack.pop());
 							
-							switch(stringArray[i]) {
-								case "+":
-									myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 + num2))));
-									break;
-								case "-":
-									myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 - num2))));
-									break;
-								case "/":
-									//If last number on stack is 0, display error msg and place numbers back on stack.
-									if (num2 == 0) {
-										System.out.println("Divide by 0.");
-										myStack.push(String.valueOf(num1)); //2nd to last number pushed back on.
-										myStack.push(String.valueOf(num2)); //Last number pushed back on.
-									}
-									else {
-										myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 / num2))));
-									}
-									break;
-								case "*":
-									myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 * num2))));
-									break;
-								case "^":
-									if (num2 < 0) {
-										System.out.println("Negative power.");
-										myStack.push(String.valueOf(num1)); //2nd to last number pushed back on.
-										myStack.push(String.valueOf(num2)); //Last number pushed back on.
-									}
-									else {
-										myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf((long) Math.pow(num1, num2)))));
-									}
-									break;
-								case "%":
-									myStack.push(String.valueOf(fixSaturation(BigInteger.valueOf(num1 % num2)))); //Need negative number handling
-									break;	
-							}
+							performOperation(num1, num2, stringArray[i]);
 						}
 					}
 					//If blank string or just contains whitespace
-					else if (stringArray[i].equals("") || stringArray[i].trim().isEmpty() ) {
+					else if (stringArray[i].equals("") || stringArray[i].trim().isEmpty()) {
 						//Do nothing
 					}
 					//If not applicable to any previous conditional statement, throw exception
